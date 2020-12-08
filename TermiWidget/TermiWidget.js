@@ -1,9 +1,6 @@
 // Variables used by Scriptable.
 // These must be at the very top of the file. Do not edit.
 // icon-color: deep-gray; icon-glyph: magic;
-// Variables used by Scriptable.
-// These must be at the very top of the file. Do not edit.
-// icon-color: deep-gray; icon-glyph: magic;
 
 // Change these to your usernames!
 const user = "bobby";
@@ -50,24 +47,34 @@ function createWidget(data) {
   dfTime.useMediumDateStyle()
   dfTime.useNoTimeStyle()
 
-  const firstLine = leftStack.addText(`[] ${user} ~$ now`)
-  firstLine.textColor = Color.white()
-  firstLine.textOpacity = 0.7
-  firstLine.font = new Font("Menlo", 11)
+  const loginTimeFormat = new DateFormatter();
+  loginTimeFormat.locale = "en"
+  loginTimeFormat.useNoDateStyle();
+  loginTimeFormat.useShortTimeStyle();
+
+  const firstLine = leftStack.addText(`Last login: ${loginTimeFormat.string(new Date())} on ttys001`);
+  firstLine.textColor = Color.white();
+  firstLine.textOpacity = 0.7;
+  firstLine.font = new Font("Menlo", 11);
+
+  const secondLine = leftStack.addText(`${user}@iPhone:~$ info`);
+  secondLine.textColor = Color.white();
+  secondLine.textOpacity = 0.7;
+  secondLine.font = new Font("Menlo", 11)
   
-  const timeLine = leftStack.addText(`[🗓] ${dfTime.string(time)}`)
+  const timeLine = leftStack.addText(`🗓 | ${dfTime.string(time)}`)
   timeLine.textColor = Color.white()
   timeLine.font = new Font("Menlo", 11)
   
-  const batteryLine = leftStack.addText(`[🔋] ${renderBattery()}`)
+  const batteryLine = leftStack.addText(`⚡️ | ${renderBattery()}`)
   batteryLine.textColor = new Color("#6ef2ae")
   batteryLine.font = new Font("Menlo", 11)
   
-  const locationLine = leftStack.addText(`[️️📍] Location: ${data.weather.location}`)
+  const locationLine = leftStack.addText(`📍 | Location: ${data.weather.location}`)
   locationLine.textColor = new Color("#7dbbae")
   locationLine.font = new Font("Menlo", 11)
   
-  const homeLine = leftStack.addText(`[🏠] ${data.home.mode}, ${data.home.temperature}°, Lights ${data.home.lights ? "On" : "Off"}`);
+  const homeLine = leftStack.addText(`🏠 | ${data.home.mode}, ${data.home.temperature}°, Lights ${data.home.lights ? "On" : "Off"}, Alarm: ${data.home.alarm}`);
   homeLine.textColor = new Color("#ff9468")
   homeLine.font = new Font("Menlo", 11)
 
