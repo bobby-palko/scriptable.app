@@ -16,11 +16,8 @@ const DEFAULT_LOCATION = {
   latitude: 0,
   longitude: 0
 };
-const TAUTULLI_API_BASE = "";
-const TAUTULLI_API_KEY = "";
 const HOME_ASSISTANT_API_BASE = "";
 const HOME_ASSISTANT_API_KEY = "";
-const UPCOMING_SAT_PASS_URL = "";
 
 const Cache = importModule('cache');
 
@@ -74,19 +71,6 @@ function createWidget(data) {
   homeLine.textColor = new Color("#ff9468")
   homeLine.font = new Font("Menlo", 11)
 
-/*  
-  let plexText = `[🍿] Plex: ${data.plex.streams} stream${data.plex.streams == 1 ? '' : 's'}`;
-   if (data.plex.streams > 0) {
-     plexText += `, ${data.plex.transcodes} transcode${data.plex.transcodes == 1 ? '' : 's'}`;
-   }
-  const plexLine = leftStack.addText(plexText);
-  plexLine.textColor = new Color("#ffa7d3")
-  plexLine.font = new Font("Menlo", 11)
-
-  const satLine = leftStack.addText(`[🛰] ${data.satPass}`);
-  satLine.textColor = new Color("#ffcc66")
-  satLine.font = new Font("Menlo", 11)
-*/
   stack.addSpacer();
   const rightStack = stack.addStack();
   rightStack.spacing = 2;
@@ -114,15 +98,11 @@ function addWeatherLine(w, text, size, bold) {
 
 async function fetchData() {
   const weather = await fetchWeather();
-  //const plex = await fetchPlex();
   const home = await fetchHome();
-  //const satPass = await fetchNextSatPass();
   
   return {
     weather,
-    //plex,
     home,
-    //satPass,
   }
 }
 
@@ -162,30 +142,22 @@ async function fetchWeather() {
   }
 }
 
-async function fetchPlex() {
-  const url = `${TAUTULLI_API_BASE}/api/v2?apikey=${TAUTULLI_API_KEY}&cmd=get_activity`; 
-  const data = await fetchJson(`plex`, url);
-
-  return {
-    streams: data.response.data.stream_count,
-    transcodes: data.response.data.stream_count_transcode,
-  };
-}
-
 async function fetchHome() {
   const mode = await fetchHomeAssistant('states/zone.home');
-  console.log(mode);
   const temp = await fetchHomeAssistant('states/sensor.kitchen_motion_sensor_temperature');
-  console.log(temp);
   const livingRoomLight = (await fetchHomeAssistant('states/light.living_room')).state == "on";
-//  const bedRoomLight = (await fetchHomeAssistant('states/light.bedroom')).state == "on";
-//  const hallwayLight = (await fetchHomeAssistant('states/light.hallway')).state == "on";
-//  const bathroomLight = (await fetchHomeAssistant('states/light.bathroom')).state == "on";
+  const bedRoomLight = (await fetchHomeAssistant('states/light.bedroom')).state == "on";
+  const officeLight = (await fetchHomeAssistant('states/light.office')).state == "on";
+  const kitchenLight = (await fetchHomeAssistant('states/light.kitchen')).state == "on";
+  const alarm = (await fetchHomeAssistant('states/alarm_control_panel.1908_s_bancroft_st_alarm_control_panel'));
+
+  console.log(fetchHomeAssistant('states/light.office'));
 
   return {
     mode: mode.attributes.friendly_name,
     temperature: Math.round(parseFloat(temp.state)),
-    lights: livingRoomLight // || bedRoomLight || hallwayLight || bathroomLight,
+    lights: livingRoomLight  || bedRoomLight || officeLight || kitchenLight,
+    alarm: alarm.state,
   };
 }
 
@@ -196,29 +168,6 @@ async function fetchHomeAssistant(path) {
   });
 }
 
-async function fetchNextSatPass() {  
-  const passes = await fetchJson('upcoming-passes.json', UPCOMING_SAT_PASS_URL);
-  const now = new Date();
-  const nextPass = passes
-    .filter((p) => now.getTime() < p.end)[0];
-
-  if (!nextPass) {
-    return 'No more passes today';
-  }
-
-  if (nextPass.start > now.getTime()) {
-    const minutes = Math.round(((nextPass.start - now.getTime()) / 1000) / 60);
-    const hours = Math.round((((nextPass.start - now.getTime()) / 1000) / 60) / 60);
-    
-    if (minutes > 59) {
-      return `${nextPass.satellite} in ${hours}h, ${Math.round(nextPass.elevation)}°`;
-    } else {
-      return `${nextPass.satellite} in ${minutes}m, ${Math.round(nextPass.elevation)}°`;
-    }
-  } else {
-    return `${nextPass.satellite} for ${Math.round(((nextPass.end - now.getTime()) / 1000) / 60)}m, ${Math.round(nextPass.elevation)}°`;
-  }
-}
 
 async function fetchJson(key, url, headers) {
   const cached = await cache.read(key, 5);
